@@ -1,5 +1,4 @@
 ;; Basic UI Configuration ---------------------------------------------------
-
 (setq inhibit-startup-message t)
 (scroll-bar-mode -1) ; Disable visible scroll
 (tool-bar-mode -1)   ; Disable the toolbar
@@ -11,16 +10,18 @@
 
 (menu-bar-mode -1)  ; Disable the menu bar
 
-;; Font Configuration --------------------------------------------------------
 
-(set-face-attribute 'default nil :font "Fira Code" :height 95)
+
+;; Font Configuration -------------------------------------------------------
+
+(set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 100)
 
 
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
 
-;; Keyboard Configuration ----------------------------------------------------
+;; Keyboard Configuration ---------------------------------------------------
 
 
 ;; Make ESC quit prompts
@@ -40,6 +41,7 @@
 (global-set-key (kbd "C-M-l")'counsel-switch-to-shell-buffer)
 (global-set-key (kbd "M-q")'previous-buffer)
 (global-set-key (kbd "M-e")'next-buffer)
+
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
 
@@ -109,25 +111,22 @@
 
 (setq doom-modeline-major-mode-icon t)
 
-(use-package doom-themes
-  :ensure t
-  :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-one t)
-
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-  ;; Enable custom neotree theme (all-the-icons must be installed!)
-  (doom-themes-neotree-config)
-  ;; or for treemacs users
-  (setq doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
-  (doom-themes-treemacs-config)
-  ;; Corrects (and improves) org-mode's native fontification.
-  (doom-themes-org-config))
-
-
+  ;; Modus Themes
+  (use-package modus-themes
+    :custom
+    (modus-themes-italic-constructs t)
+    (modus-themes-bold-constructs t)
+    (modus-themes-mixed-fonts t)
+    (modus-themes-headings '((1 . (1.5))
+                             (2 . (1.3))
+                             (t . (1.1))))
+    (modus-themes-to-toggle
+     '(modus-operandi-tinted modus-vivendi-tinted))
+    :bind
+    (("C-c w m" . modus-themes-toggle)
+     ("C-c w M" . modus-themes-select))
+    :init
+    (load-theme 'modus-operandi-tinted :no-confirm))
 
 ;; Other packages --------------------------------------------------------
 (use-package which-key
@@ -180,7 +179,7 @@
 
   (evil-set-initial-state 'messages-buffer-mode 'normal)
   (evil-set-initial-state 'dashboard-mode 'normal))
-
+(evil-set-undo-system 'undo-redo)
 
 (use-package evil-collection
   :after evil
@@ -257,7 +256,7 @@
   (setq org-log-into-drawer t)
 
   (setq org-agenda-files
-	'("~/lab/nucleus/agenda/academic.org"))
+	'("~/lab/nucleus/agenda"))
 
   (require 'org-habit)
   (add-to-list 'org-modules 'org-habit)
@@ -360,10 +359,58 @@
   
   (efs/org-font-setup))
 
+    ;; Improve org mode looks
+(setq-default org-startup-indented t
+              org-pretty-entities t
+              org-use-sub-superscripts "{}"
+              org-hide-emphasis-markers t
+              org-startup-with-inline-images t
+              org-image-actual-width '(300))
 
+(use-package org-appear
+  :hook
+  (org-mode . org-appear-mode))
 
+  ;; LaTeX previews
+(use-package org-fragtog
+  :after org
+  :custom
+  (org-startup-with-latex-preview t)
+  :hook
+  (org-mode . org-fragtog-mode)
+  :custom
+  (org-format-latex-options
+   (plist-put org-format-latex-options :scale 2)
+   (plist-put org-format-latex-options :foreground 'auto)
+   (plist-put org-format-latex-options :background 'auto)))
 
+(defun ews-distraction-free ()
+  "Distraction-free writing environment using Olivetti package."
+  (interactive)
+  (if (equal olivetti-mode nil)
+      (progn
+        (window-configuration-to-register 1)
+        (delete-other-windows)
+        (text-scale-set 2)
+        (olivetti-mode t))
+    (progn
+      (if (eq (length (window-list)) 1)
+          (jump-to-register 1))
+      (olivetti-mode 0)
+      (text-scale-set 0))))
 
+(use-package olivetti
+  :demand t
+  :bind
+  (("<f9>" . ews-distraction-free)))
+
+(use-package org-modern
+  :hook
+  (org-mode . global-org-modern-mode)
+  :custom
+  (org-modern-keyword nil)
+  (org-modern-checkbox nil)
+  (org-modern-table nil))
 
 (use-package org-bullets
   :after org
@@ -381,29 +428,7 @@
 
 (setq org-startup-with-inline-images t)
 
-
-
-
-
-;; use-package with package.el:
-(use-package dashboard
-  :ensure t
-  :init
-  (progn
-    (setq dashboard-items '((recents  . 5)
-                        (projects . 5)
-                        (agenda . 5)))
-    ;;(setq dashboard-center-content t)
-    (setq dashboard-set-footer nil)
-    (setq dashboard-init-info "")
-    (setq dashboard-banner-logo-title "thlurte")
-    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
-  :config
-  (dashboard-open))
-
-
-
-(Use-package org-roam
+(use-package org-roam
   :ensure t
   :init
   (setq org-roam-v2-ack t)
@@ -418,7 +443,42 @@
   :config
   (org-roam-setup))
 
+  ;; Read ePub files
+(use-package nov
+  :init
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
 
+(defun my-nov-font-setup ()
+  (face-remap-add-relative 'variable-pitch :family "FiraCode Nerd Font"
+                                           :height 1.0))
+(add-hook 'nov-mode-hook 'my-nov-font-setup)
+(require 'justify-kp)
+(setq nov-text-width t)
+
+(defun my-nov-window-configuration-change-hook ()
+  (my-nov-post-html-render-hook)
+  (remove-hook 'window-configuration-change-hook
+               'my-nov-window-configuration-change-hook
+               t))
+
+(defun my-nov-post-html-render-hook ()
+  (if (get-buffer-window)
+      (let ((max-width (pj-line-width))
+            buffer-read-only)
+        (save-excursion
+          (goto-char (point-min))
+          (while (not (eobp))
+            (when (not (looking-at "^[[:space:]]*$"))
+              (goto-char (line-end-position))
+              (when (> (shr-pixel-column) max-width)
+                (goto-char (line-beginning-position))
+                (pj-justify)))
+            (forward-line 1))))
+    (add-hook 'window-configuration-change-hook
+              'my-nov-window-configuration-change-hook
+              nil t)))
+
+(add-hook 'nov-post-html-render-hook 'my-nov-post-html-render-hook)
 
 (use-package dap-mode
   ;; Uncomment the config below if you want all UI panes to be hidden by default!
@@ -430,7 +490,7 @@
   :config
   ;; Set up Node debugging
   (require 'dap-node)
-  (dap-node-setup) ;; Automatically installs Node debug adapter if needed
+  (dap-node-setup)) ;; Automatically installs Node debug adapter if needed
 
   ;; Bind `C-c l d` to `dap-hydra` for easy access
   ;(general-define-key
@@ -465,7 +525,19 @@
 
 (use-package lsp-ivy)
 
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+         ("<tab>" . company-complete-selection))
+        (:map lsp-mode-map
+         ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
 
+(use-package company-box
+  :hook (company-mode . company-box-mode))
 
 
 (use-package typescript-mode
@@ -474,17 +546,11 @@
   :config
   (setq typescript-indent-level 2))
 
-
-(use-package python-mode
+(use-package lsp-pyright
   :ensure t
-  :hook (python-mode . lsp-deferred)
-  :custom
-  ;; NOTE: Set these if Python 3 is called "python3" on your system!
-  ;; (python-shell-interpreter "python3")
-  ;; (dap-python-executable "python3")
-  (dap-python-debugger 'debugpy)
-  :config
-  (require 'dap-python))
+  :hook (python-mode . (lambda ()
+                          (require 'lsp-pyright)
+                          (lsp))))  ; or lsp-deferred
 
 (use-package pyvenv
   :config
@@ -493,6 +559,23 @@
 (use-package evil-nerd-commenter
   :bind ("M-/" . evilnc-comment-or-uncomment-lines)) 
 
+
+
+;; use-package with package.el:
+(use-package dashboard
+  :ensure t
+  :init
+  (progn
+    (setq dashboard-items '((recents  . 5)
+                        (projects . 5)
+                        (agenda . 5)))
+    ;;(setq dashboard-center-content t)
+    (setq dashboard-set-footer nil)
+    (setq dashboard-init-info "")
+    (setq dashboard-banner-logo-title "thlurte")
+    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
+  :config
+  (dashboard-open))
 
 
 (use-package dired
