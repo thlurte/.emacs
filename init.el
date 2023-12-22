@@ -14,7 +14,7 @@
 
 ;; Font Configuration -------------------------------------------------------
 
-(set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 100)
+(set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 85)
 
 
 (use-package rainbow-delimiters
@@ -32,7 +32,8 @@
 
 (dolist (mode '(org-mode-hook
 		term-mode-hook
-		eshell-mode-hook))
+		eshell-mode-hook
+		nov-mode-hook))
 (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
 
@@ -41,6 +42,7 @@
 (global-set-key (kbd "C-M-l")'counsel-switch-to-shell-buffer)
 (global-set-key (kbd "M-q")'previous-buffer)
 (global-set-key (kbd "M-e")'next-buffer)
+(global-set-key (kbd "C-M-w")'kill-buffer)
 
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 
@@ -102,6 +104,19 @@
   (setq ivy-initial-inputs-alist nil))
 
 
+(use-package all-the-icons
+  :if (display-graphic-p)
+  :commands all-the-icons-install-fonts
+  :init
+  (unless (find-font (font-spec :name "all-the-icons"))
+    (all-the-icons-install-fonts t)))
+
+(use-package all-the-icons-dired
+  :if (display-graphic-p)
+  :hook (dired-mode . all-the-icons-dired-mode))
+
+
+
 ;; Doom packages for UI Configuration --------------------------------------
 
 (use-package doom-modeline
@@ -111,22 +126,9 @@
 
 (setq doom-modeline-major-mode-icon t)
 
-  ;; Modus Themes
-  (use-package modus-themes
-    :custom
-    (modus-themes-italic-constructs t)
-    (modus-themes-bold-constructs t)
-    (modus-themes-mixed-fonts t)
-    (modus-themes-headings '((1 . (1.5))
-                             (2 . (1.3))
-                             (t . (1.1))))
-    (modus-themes-to-toggle
-     '(modus-operandi-tinted modus-vivendi-tinted))
-    :bind
-    (("C-c w m" . modus-themes-toggle)
-     ("C-c w M" . modus-themes-select))
-    :init
-    (load-theme 'modus-operandi-tinted :no-confirm))
+
+(use-package doom-themes
+  :init (load-theme 'doom-tomorrow-night t))
 
 ;; Other packages --------------------------------------------------------
 (use-package which-key
@@ -145,19 +147,6 @@
   ([remap describe-command] . helpful-command)
   ([remap describe-variable] . counsel-describe-variable)
   ([remap describe-key] . helpful-key))
-
-(use-package all-the-icons
-  :if (display-graphic-p)
-  :commands all-the-icons-install-fonts
-  :init
-  (unless (find-font (font-spec :name "all-the-icons"))
-    (all-the-icons-install-fonts t)))
-
-(use-package all-the-icons-dired
-  :if (display-graphic-p)
-  :hook (dired-mode . all-the-icons-dired-mode))
-
-
 
 
 ;; Evil packages configurations -----------------------------------------
@@ -234,7 +223,7 @@
                   (org-level-6 . 1.1)
                   (org-level-7 . 1.1)
                   (org-level-8 . 1.1)))
-    (set-face-attribute (car face) nil :font "Hack" :weight 'regular :height (cdr face)))
+    (set-face-attribute (car face) nil :font "FiraCode Nerd Font" :weight 'regular :height (cdr face)))
 
   ;; Ensure that anything that should be fixed-pitch in Org files appears that way
   (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
@@ -399,6 +388,9 @@
       (olivetti-mode 0)
       (text-scale-set 0))))
 
+(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+
+
 (use-package olivetti
   :demand t
   :bind
@@ -501,7 +493,8 @@
 (org-babel-do-load-languages
   'org-babel-load-languages
   '((emacs-lisp . t)
-    (python . t)))
+    (python . t)
+    (latex . t)))
 
 (defun efs/lsp-mode-setup ()
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
@@ -559,7 +552,13 @@
 (use-package evil-nerd-commenter
   :bind ("M-/" . evilnc-comment-or-uncomment-lines)) 
 
-
+(setq erc-server "irc.libera.chat"
+      erc-nick "thlurte"    ; Change this!
+      erc-user-full-name "Adheeb Ahmed"  ; And this!
+      erc-track-shorten-start 8
+      erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs"))
+      erc-kill-buffer-on-part t
+            erc-auto-query 'bury)
 
 ;; use-package with package.el:
 (use-package dashboard
