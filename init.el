@@ -410,6 +410,21 @@
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
+;; (use-package org-download
+;;     :after org
+;;     :defer nil
+;;     :custom
+;;     (org-download-method 'directory)
+;;     (org-download-image-dir "images")
+;;     (org-download-heading-lvl nil)
+;;     (org-download-timestamp "%Y%m%d-%H%M%S_")
+;;     (org-image-actual-width 300)
+;;     (org-download-screenshot-method "/usr/local/bin/pngpaste %s")
+;;     :bind
+;;     ("C-M-y" . org-download-screenshot file)
+;;     :config
+;;     (require 'org-download))
+
 (defun efs/org-mode-visual-fill ()
   (setq visual-fill-column-width 100
         visual-fill-column-center-text t)
@@ -560,6 +575,23 @@
       erc-kill-buffer-on-part t
             erc-auto-query 'bury)
 
+  ;; inspired by https://zzamboni.org/post/how-to-insert-screenshots-in-org-documents-on-macos/
+
+(use-package org-download
+  :after org
+  :defer nil
+  :custom
+  (org-download-method 'directory)
+  (org-download-image-dir "~/journal/_resources")
+  (org-download-heading-lvl 0)
+  (org-download-timestamp "org_%Y%m%d-%H%M%S_")
+  (org-image-actual-width 900)
+  (org-download-screenshot-method "xclip -selection clipboard -t image/png -o > '%s'")
+  :bind
+  ("C-M-y" . org-download-screenshot)
+  :config
+  (require 'org-download))
+
 ;; use-package with package.el:
 (use-package dashboard
   :ensure t
@@ -588,6 +620,8 @@
     "l" 'dired-single-buffer))
 
 (use-package dired-single)
+
+
 
 (use-package all-the-icons-dired
   :hook (dired-mode . all-the-icons-dired-mode))
