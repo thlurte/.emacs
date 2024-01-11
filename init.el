@@ -12,6 +12,7 @@
 
 
 
+
 ;; Font Configuration -------------------------------------------------------
 
 (set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 85)
@@ -128,7 +129,7 @@
 
 
 (use-package doom-themes
-  :init (load-theme 'doom-tomorrow-night t))
+  :init (load-theme 'doom-city-lights t))
 
 ;; Other packages --------------------------------------------------------
 (use-package which-key
@@ -326,8 +327,17 @@
 
   (setq org-capture-templates
     `(("t" "Tasks / Projects")
-      ("tt" "Task" entry (file+olp "~/lab/nucleus/agenda/tasks.org" "Agenda")
+     ("tw" "Task" entry (file+olp "~/lab/nucleus/agenda/work.org" "Work")
            "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
+     ("tt" "Task" entry (file+olp "~/lab/nucleus/agenda/tasks.org" "Agenda")
+           "* TODO %?\n  %U\n  %a\n  %i" :empty-lines 1)
+      ("r" "Records")
+      ("rr" "Record" entry
+       (file+olp+datetree "~/lab/nucleus/agenda/records.org")
+           "\n* %<%I:%M %p> - Record :record:\n\n%?\n\n"
+           ;; ,(dw/read-file-as-string "~/Notes/Templates/Daily.org")
+           :clock-in :clock-resume
+           :empty-lines 1)
 
       ("j" "Journal Entries")
       ("jj" "Journal" entry
@@ -591,22 +601,7 @@
   ("C-M-y" . org-download-screenshot)
   :config
   (require 'org-download))
-
-;; use-package with package.el:
-(use-package dashboard
-  :ensure t
-  :init
-  (progn
-    (setq dashboard-items '((recents  . 5)
-                        (projects . 5)
-                        (agenda . 5)))
-    ;;(setq dashboard-center-content t)
-    (setq dashboard-set-footer nil)
-    (setq dashboard-init-info "")
-    (setq dashboard-banner-logo-title "thlurte")
-    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
-  :config
-  (dashboard-open))
+(setq org-image-actual-width nil)
 
 
 (use-package dired
@@ -638,3 +633,20 @@
   :config
   (evil-collection-define-key 'normal 'dired-mode-map
     "H" 'dired-hide-dotfiles-mode))
+
+
+;; use-package with package.el:
+(use-package dashboard
+  :ensure t
+  :init
+  (progn
+    (setq dashboard-items '((recents  . 5)
+                        (projects . 5)
+                        (agenda . 5)))
+    ;;(setq dashboard-center-content t)
+    (setq dashboard-set-footer nil)
+    (setq dashboard-init-info "")
+    (setq dashboard-banner-logo-title "thlurte")
+    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
+  :config
+  (dashboard-open))
