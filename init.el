@@ -635,18 +635,23 @@
     "H" 'dired-hide-dotfiles-mode))
 
 
-;; use-package with package.el:
 (use-package dashboard
   :ensure t
   :init
   (progn
     (setq dashboard-items '((recents  . 5)
-                        (projects . 5)
-                        (agenda . 5)))
+                            (projects . 5)
+                            (agenda . 5)
+                            (custom . dashboard-insert-custom))) ; Add the custom item
     ;;(setq dashboard-center-content t)
     (setq dashboard-set-footer nil)
     (setq dashboard-init-info "")
     (setq dashboard-banner-logo-title "thlurte")
     (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
   :config
+  (defun dashboard-insert-custom (list-size)
+    (insert "Library:\n")
+    (dolist (file (directory-files "/home/ahmed/library" t "\\.epub$"))
+      (insert (format "  %s\n" (file-name-nondirectory file)))))
+  
   (dashboard-open))
