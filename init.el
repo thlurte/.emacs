@@ -120,6 +120,7 @@
 
 ;; Doom packages for UI Configuration --------------------------------------
 
+
 (use-package doom-modeline
  :ensure t
  :init (doom-modeline-mode 1)
@@ -129,7 +130,7 @@
 
 
 (use-package doom-themes
-  :init (load-theme 'doom-city-lights t))
+  :init (load-theme 'doom-homage-black t))
 
 ;; Other packages --------------------------------------------------------
 (use-package which-key
@@ -658,6 +659,8 @@
       ?\C-u
       ?\C-h
       ?\M-x
+      ?\M-q
+      ?\M-e
       ?\M-`
       ?\M-&
       ?\M-:
@@ -701,8 +704,8 @@
 (use-package dashboard
   :ensure t
   :config
-  (dashboard-setup-startup-hook)
   :init
+  (dashboard-setup-startup-hook)
   (progn
     (setq dashboard-items '((recents  . 5)
                             (projects . 5)
@@ -711,7 +714,8 @@
     ;;(setq dashboard-center-content t)
     (setq dashboard-set-footer nil)
     (setq dashboard-init-info "")
+    (setq dashboard-set-file-icons t)
     (setq dashboard-banner-logo-title "thlurte")
     (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
-  )
+)
 
