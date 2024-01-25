@@ -11,22 +11,9 @@
 (menu-bar-mode -1)  ; Disable the menu bar
 
 
-
-
 ;; Font Configuration -------------------------------------------------------
 
 (set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 85)
-
-
-(use-package rainbow-delimiters
-  :hook (prog-mode . rainbow-delimiters-mode))
-
-
-;; Keyboard Configuration ---------------------------------------------------
-
-
-;; Make ESC quit prompts
-;;(use-package command-log-mode)
 
 (column-number-mode)
 (global-display-line-numbers-mode t)
@@ -37,16 +24,15 @@
 		nov-mode-hook))
 (add-hook mode (lambda () (display-line-numbers-mode 0))))
 
-
 ;; hmm this is kinda fun
 (global-set-key (kbd "C-M-s")'counsel-switch-buffer)
+(global-set-key (kbd "s-d")'counsel-linux-app)
 (global-set-key (kbd "C-M-l")'counsel-switch-to-shell-buffer)
 (global-set-key (kbd "M-q")'previous-buffer)
 (global-set-key (kbd "M-e")'next-buffer)
 (global-set-key (kbd "C-M-w")'kill-buffer)
 
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
-
 
 ;; Package Manager Configuration ---------------------------------------------
 
@@ -67,6 +53,17 @@
 
 (require 'use-package)
 (setq use-package-always-ensure t)
+
+;; Counsel Configuration ---------------------------------------------------
+
+(use-package counsel
+  :bind (("M-x" . counsel-M-x)
+	 ("C-x b" . counsel-ibuffer)
+	 ("C-x C-f" . counsel-find-file)
+	 :map minibuffer-local-map
+	 ("C-r" . counsel-minibuffer-history))
+  :config
+  (setq ivy-initial-inputs-alist nil))
 
 ;; Ivy Configuration --------------------------------------------------------
 (use-package ivy
@@ -91,20 +88,6 @@
   :init
   (ivy-rich-mode 1))
 
-
-
-;; Counsel Configuration ---------------------------------------------------
-
-(use-package counsel
-  :bind (("M-x" . counsel-M-x)
-	 ("C-x b" . counsel-ibuffer)
-	 ("C-x C-f" . counsel-find-file)
-	 :map minibuffer-local-map
-	 ("C-r" . counsel-minibuffer-history))
-  :config
-  (setq ivy-initial-inputs-alist nil))
-
-
 (use-package all-the-icons
   :if (display-graphic-p)
   :commands all-the-icons-install-fonts
@@ -115,9 +98,6 @@
 (use-package all-the-icons-dired
   :if (display-graphic-p)
   :hook (dired-mode . all-the-icons-dired-mode))
-
-
-
 ;; Doom packages for UI Configuration --------------------------------------
 
 
@@ -131,6 +111,13 @@
 
 (use-package doom-themes
   :init (load-theme 'doom-homage-black t))
+
+
+
+
+(use-package rainbow-delimiters
+  :hook (prog-mode . rainbow-delimiters-mode))
+
 
 ;; Other packages --------------------------------------------------------
 (use-package which-key
@@ -201,6 +188,88 @@
 ;; NOTE: Make sure to configure a GitHub token before using this package!
 ;; - https://magit.vc/manual/forge/Token-Creation.html#Token-Creation
 ;; - https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
+
+
+
+(use-package dap-mode)
+  ;; Uncomment the config below if you want all UI panes to be hidden by default!
+  ;; :custom
+  ;; (lsp-enable-dap-auto-configure nil)
+  ;; :config
+  ;; (dap-ui-mode 1)
+
+  ;; :config
+  ;; ;; Set up Node debugging
+  ;; (require 'dap-node)
+  ;; (dap-node-setup)) ;; Automatically installs Node debug adapter if needed
+
+  ;; Bind `C-c l d` to `dap-hydra` for easy access
+  ;(general-define-key
+   ; :keymaps 'lsp-mode-map
+   ; :prefix lsp-keymap-prefix
+   ; "d" '(dap-hydra t :wk "debugger")))
+
+(org-babel-do-load-languages
+  'org-babel-load-languages
+  '((emacs-lisp . t)
+    (python . t)
+    (latex . t)))
+
+(defun efs/lsp-mode-setup ()
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumb-mode))
+
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :hook (lsp-mode . efs/lsp-mode-setup)
+  :init
+  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+  :config
+  (lsp-enable-which-key-integration t))
+
+(use-package lsp-ui
+  :hook (lsp-mode . lsp-ui-mode)
+  :custom
+  (lsp-ui-doc-position 'bottom))
+
+(use-package lsp-treemacs
+  :after lsp)
+
+(use-package lsp-ivy)
+
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+         ("<tab>" . company-complete-selection))
+        (:map lsp-mode-map
+         ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
+
+
+(use-package typescript-mode
+  :mode "\\.ts\\'"
+  :hook (typescript-mode . lsp-deferred)
+  :config
+  (setq typescript-indent-level 2))
+
+(use-package lsp-pyright
+  :ensure t
+  :hook (python-mode . (lambda ()
+                          (require 'lsp-pyright)
+                          (lsp))))  ; or lsp-deferred
+
+(use-package pyvenv
+  :config
+  (pyvenv-mode 1))
+
+(use-package evil-nerd-commenter
+  :bind ("M-/" . evilnc-comment-or-uncomment-lines)) 
 
 
 ;; Org Mode Configuration --------------------------------------------------
@@ -427,21 +496,6 @@
   :custom
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 
-;; (use-package org-download
-;;     :after org
-;;     :defer nil
-;;     :custom
-;;     (org-download-method 'directory)
-;;     (org-download-image-dir "images")
-;;     (org-download-heading-lvl nil)
-;;     (org-download-timestamp "%Y%m%d-%H%M%S_")
-;;     (org-image-actual-width 300)
-;;     (org-download-screenshot-method "/usr/local/bin/pngpaste %s")
-;;     :bind
-;;     ("C-M-y" . org-download-screenshot file)
-;;     :config
-;;     (require 'org-download))
-
 (defun efs/org-mode-visual-fill ()
   (setq visual-fill-column-width 100
         visual-fill-column-center-text t)
@@ -504,95 +558,11 @@
 
 (add-hook 'nov-post-html-render-hook 'my-nov-post-html-render-hook)
 
-(use-package dap-mode
-  ;; Uncomment the config below if you want all UI panes to be hidden by default!
-  ;; :custom
-  ;; (lsp-enable-dap-auto-configure nil)
-  ;; :config
-  ;; (dap-ui-mode 1)
-
-  :config
-  ;; Set up Node debugging
-  (require 'dap-node)
-  (dap-node-setup)) ;; Automatically installs Node debug adapter if needed
-
-  ;; Bind `C-c l d` to `dap-hydra` for easy access
-  ;(general-define-key
-   ; :keymaps 'lsp-mode-map
-   ; :prefix lsp-keymap-prefix
-   ; "d" '(dap-hydra t :wk "debugger")))
-
 (org-babel-do-load-languages
   'org-babel-load-languages
   '((emacs-lisp . t)
     (python . t)
     (latex . t)))
-
-(defun efs/lsp-mode-setup ()
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode))
-
-(use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . efs/lsp-mode-setup)
-  :init
-  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
-  :config
-  (lsp-enable-which-key-integration t))
-
-(use-package lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :custom
-  (lsp-ui-doc-position 'bottom))
-
-(use-package lsp-treemacs
-  :after lsp)
-
-(use-package lsp-ivy)
-
-(use-package company
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
-  :bind (:map company-active-map
-         ("<tab>" . company-complete-selection))
-        (:map lsp-mode-map
-         ("<tab>" . company-indent-or-complete-common))
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
-
-(use-package company-box
-  :hook (company-mode . company-box-mode))
-
-
-(use-package typescript-mode
-  :mode "\\.ts\\'"
-  :hook (typescript-mode . lsp-deferred)
-  :config
-  (setq typescript-indent-level 2))
-
-(use-package lsp-pyright
-  :ensure t
-  :hook (python-mode . (lambda ()
-                          (require 'lsp-pyright)
-                          (lsp))))  ; or lsp-deferred
-
-(use-package pyvenv
-  :config
-  (pyvenv-mode 1))
-
-(use-package evil-nerd-commenter
-  :bind ("M-/" . evilnc-comment-or-uncomment-lines)) 
-
-(setq erc-server "irc.libera.chat"
-      erc-nick "thlurte"    ; Change this!
-      erc-user-full-name "Adheeb Ahmed"  ; And this!
-      erc-track-shorten-start 8
-      erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs"))
-      erc-kill-buffer-on-part t
-            erc-auto-query 'bury)
-
-  ;; inspired by https://zzamboni.org/post/how-to-insert-screenshots-in-org-documents-on-macos/
 
 (use-package org-download
   :after org
@@ -610,37 +580,27 @@
   (require 'org-download))
 (setq org-image-actual-width nil)
 
+(defun efs/lsp-mode-setup ()
+  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
+  (lsp-headerline-breadcrumb-mode))
 
-(use-package dired
-  :ensure nil
-  :commands (dired dired-jump)
-  :bind (("C-x C-j" . dired-jump))
-  :custom ((dired-listing-switches "-agho --group-directories-first"))
+(use-package dashboard
+  :ensure t
   :config
-  (evil-collection-define-key 'normal 'dired-mode-map
-    "h" 'dired-single-up-directory
-    "l" 'dired-single-buffer))
-
-(use-package dired-single)
-
-
-
-(use-package all-the-icons-dired
-  :hook (dired-mode . all-the-icons-dired-mode))
-
-(use-package dired-open
-  :config
-  ;; Doesn't work as expected!
-  ;;(add-to-list 'dired-open-functions #'dired-open-xdg t)
-  (setq dired-open-extensions '(("png" . "feh")
-                                ("mkv" . "mpv"))))
-
-(use-package dired-hide-dotfiles
-  :hook (dired-mode . dired-hide-dotfiles-mode)
-  :config
-  (evil-collection-define-key 'normal 'dired-mode-map
-    "H" 'dired-hide-dotfiles-mode))
-
+  :init
+  (dashboard-setup-startup-hook)
+  (progn
+    (setq dashboard-items '((recents  . 5)
+                            (projects . 5)
+                            (agenda . 5)
+                            )) ; Add the custom item
+    ;;(setq dashboard-center-content t)
+    (setq dashboard-set-footer nil)
+    (setq dashboard-init-info "")
+    (setq dashboard-set-file-icons t)
+    (setq dashboard-banner-logo-title "thlurte")
+    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
+)
 
 (defun efs/exwm-update-class ()
   (exwm-workspace-rename-buffer exwm-class-name))
@@ -700,22 +660,3 @@
                     (number-sequence 0 9))))
 
   (exwm-enable))
-
-(use-package dashboard
-  :ensure t
-  :config
-  :init
-  (dashboard-setup-startup-hook)
-  (progn
-    (setq dashboard-items '((recents  . 5)
-                            (projects . 5)
-                            (agenda . 5)
-                            )) ; Add the custom item
-    ;;(setq dashboard-center-content t)
-    (setq dashboard-set-footer nil)
-    (setq dashboard-init-info "")
-    (setq dashboard-set-file-icons t)
-    (setq dashboard-banner-logo-title "thlurte")
-    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
-)
-
