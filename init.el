@@ -13,10 +13,9 @@
 
 ;; Font Configuration -------------------------------------------------------
 
-(set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 85)
+(set-face-attribute 'default nil :font "FiraCode Nerd Font" :height 110)
 
 (column-number-mode)
-(global-display-line-numbers-mode t)
 
 (dolist (mode '(org-mode-hook
 		term-mode-hook
@@ -33,6 +32,7 @@
 (global-set-key (kbd "C-M-w")'kill-buffer)
 
 (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+
 
 ;; Package Manager Configuration ---------------------------------------------
 
@@ -64,6 +64,8 @@
 	 ("C-r" . counsel-minibuffer-history))
   :config
   (setq ivy-initial-inputs-alist nil))
+
+
 
 ;; Ivy Configuration --------------------------------------------------------
 (use-package ivy
@@ -98,6 +100,10 @@
 (use-package all-the-icons-dired
   :if (display-graphic-p)
   :hook (dired-mode . all-the-icons-dired-mode))
+
+
+
+
 ;; Doom packages for UI Configuration --------------------------------------
 
 
@@ -120,6 +126,8 @@
 
 
 ;; Other packages --------------------------------------------------------
+
+
 (use-package which-key
   :init (which-key-mode)
   :diminish which-key-mode
@@ -159,12 +167,14 @@
   (evil-set-initial-state 'dashboard-mode 'normal))
 (evil-set-undo-system 'undo-redo)
 
+
 (use-package evil-collection
   :after evil
   :config
   (evil-collection-init))
 
 
+;; Projectile configurations ------------------------------------------
 
 (use-package projectile
   :diminish projectile-mode
@@ -181,6 +191,8 @@
   :config (counsel-projectile-mode))
 
 
+;; Magit configurations ------------------------------------------
+
 (use-package magit
   :custom
   (magit-display-buffer-function #'magit-display-buffer-same-window-except-diff-v1))
@@ -190,6 +202,8 @@
 ;; - https://magit.vc/manual/ghub/Getting-Started.html#Getting-Started
 
 
+;; Dap mode configurations ------------------------------------------
+;; i dont even know why i am using this
 
 (use-package dap-mode)
   ;; Uncomment the config below if you want all UI panes to be hidden by default!
@@ -209,23 +223,41 @@
    ; :prefix lsp-keymap-prefix
    ; "d" '(dap-hydra t :wk "debugger")))
 
+
+
+;; Org babel configurations ------------------------------------------
 (org-babel-do-load-languages
   'org-babel-load-languages
   '((emacs-lisp . t)
     (python . t)
     (latex . t)))
 
+;; LSP configurations --------------------------------------------------
+
+
 (defun efs/lsp-mode-setup ()
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
   (lsp-headerline-breadcrumb-mode))
 
 (use-package lsp-mode
-  :commands (lsp lsp-deferred)
-  :hook (lsp-mode . efs/lsp-mode-setup)
-  :init
-  (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
   :config
-  (lsp-enable-which-key-integration t))
+  (setq lsp-idle-delay 0.5
+        lsp-enable-symbol-highlighting t
+        lsp-enable-snippet nil  ;; Not supported by company capf, which is the recommended company backend
+        lsp-pyls-plugins-flake8-enabled t)
+  (lsp-register-custom-settings
+   '(("pyls.plugins.pyls_mypy.enabled" t t)
+     ("pyls.plugins.pyls_mypy.live_mode" nil t)
+     ("pyls.plugins.pyls_black.enabled" t t)
+     ("pyls.plugins.pyls_isort.enabled" t t)
+
+     ;; Disable these as they're duplicated by flake8
+     ("pyls.plugins.pycodestyle.enabled" nil t)
+     ("pyls.plugins.mccabe.enabled" nil t)
+     ("pyls.plugins.pyflakes.enabled" nil t)))
+  :hook
+  ((python-mode . lsp)
+   (lsp-mode . lsp-enable-which-key-integration)))
 
 (use-package lsp-ui
   :hook (lsp-mode . lsp-ui-mode)
@@ -236,20 +268,6 @@
   :after lsp)
 
 (use-package lsp-ivy)
-
-(use-package company
-  :after lsp-mode
-  :hook (lsp-mode . company-mode)
-  :bind (:map company-active-map
-         ("<tab>" . company-complete-selection))
-        (:map lsp-mode-map
-         ("<tab>" . company-indent-or-complete-common))
-  :custom
-  (company-minimum-prefix-length 1)
-  (company-idle-delay 0.0))
-
-(use-package company-box
-  :hook (company-mode . company-box-mode))
 
 
 (use-package typescript-mode
@@ -264,9 +282,32 @@
                           (require 'lsp-pyright)
                           (lsp))))  ; or lsp-deferred
 
+(use-package python
+  :config
+  (setq python-shell-interpreter "python3"))
+
+(setq lsp-pyright-python-executable-cmd "python3")
+
 (use-package pyvenv
   :config
   (pyvenv-mode 1))
+
+
+;; Company ???? ---------------------------------------------
+
+(use-package company
+  :after lsp-mode
+  :hook (lsp-mode . company-mode)
+  :bind (:map company-active-map
+         ("<tab>" . company-complete-selection))
+        (:map lsp-mode-map
+         ("<tab>" . company-indent-or-complete-common))
+  :custom
+  (company-minimum-prefix-length 1)
+  (company-idle-delay 0.0))
+
+(use-package company-box
+  :hook (company-mode . company-box-mode))
 
 (use-package evil-nerd-commenter
   :bind ("M-/" . evilnc-comment-or-uncomment-lines)) 
@@ -459,29 +500,6 @@
    (plist-put org-format-latex-options :foreground 'auto)
    (plist-put org-format-latex-options :background 'auto)))
 
-(defun ews-distraction-free ()
-  "Distraction-free writing environment using Olivetti package."
-  (interactive)
-  (if (equal olivetti-mode nil)
-      (progn
-        (window-configuration-to-register 1)
-        (delete-other-windows)
-        (text-scale-set 2)
-        (olivetti-mode t))
-    (progn
-      (if (eq (length (window-list)) 1)
-          (jump-to-register 1))
-      (olivetti-mode 0)
-      (text-scale-set 0))))
-
-(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
-
-
-(use-package olivetti
-  :demand t
-  :bind
-  (("<f9>" . ews-distraction-free)))
-
 (use-package org-modern
   :hook
   (org-mode . global-org-modern-mode)
@@ -521,6 +539,78 @@
   :config
   (org-roam-setup))
 
+(org-babel-do-load-languages
+  'org-babel-load-languages
+  '((emacs-lisp . t)
+    (python . t)
+    (latex . t)))
+
+(use-package org-download
+  :after org
+  :defer nil
+  :custom
+  (org-download-method 'directory)
+  (org-download-image-dir "~/journal/_resources")
+  (org-download-heading-lvl 0)
+  (org-download-timestamp "org_%Y%m%d-%H%M%S_")
+  (org-image-actual-width 900)
+  (org-download-screenshot-method "xclip -selection clipboard -t image/png -o > '%s'")
+  :bind
+  ("C-M-y" . org-download-screenshot)
+  :config
+  (require 'org-download))
+(setq org-image-actual-width nil)
+
+(use-package org-ref)
+
+(add-hook 'org-babel-after-execute-hook 'org-redisplay-inline-images)
+
+;; install bibtex completion with 
+;; https://github.com/tmalsburg/helm-bibtex/blob/master/bibtex-completion.el
+
+(setq bibtex-completion-bibliography
+      '("/home/thlurte/Zotero/bib/My Library/a.bib"))
+(setq bibtex-completion-library-path '("/home/thlurte/Zotero/bib/My Library/"))
+
+(setq bibtex-completion-pdf-symbol "⌘")
+(setq bibtex-completion-notes-symbol "✎")
+
+(use-package ivy-bibtex
+  :ensure t
+  :init
+  (setq bibtex-completion-pdf-open-function
+        (lambda (fpath)
+          ;; use dired-guess-default for this, set the programs with dired-guess-shell-alist-user
+          (let ((guess (dired-guess-default (list fpath))))
+            (if guess
+                (call-process (car guess) nil 0 nil fpath)
+              (call-process do.minimal/pdf-reader nil 0 nil fpath))))))
+
+(use-package citar
+  :custom
+  (citar-bibliography '("~/Zotero/bib/My Library/a.bib")))
+
+
+(defun ews-distraction-free ()
+  "Distraction-free writing environment using Olivetti package."
+  (interactive)
+  (if (equal olivetti-mode nil)
+      (progn
+        (window-configuration-to-register 1)
+        (delete-other-windows)
+        (text-scale-set 2)
+        (olivetti-mode t))
+    (progn
+      (if (eq (length (window-list)) 1)
+          (jump-to-register 1))
+      (olivetti-mode 0)
+      (text-scale-set 0))))
+
+(use-package olivetti
+  :demand t
+  :bind
+  (("<f9>" . ews-distraction-free)))
+
   ;; Read ePub files
 (use-package nov
   :init
@@ -530,6 +620,9 @@
   (face-remap-add-relative 'variable-pitch :family "FiraCode Nerd Font"
                                            :height 1.0))
 (add-hook 'nov-mode-hook 'my-nov-font-setup)
+
+;; https://github.com/Fuco1/justify-kp/blob/master/justify-kp.el
+
 (require 'justify-kp)
 (setq nov-text-width t)
 
@@ -558,49 +651,10 @@
 
 (add-hook 'nov-post-html-render-hook 'my-nov-post-html-render-hook)
 
-(org-babel-do-load-languages
-  'org-babel-load-languages
-  '((emacs-lisp . t)
-    (python . t)
-    (latex . t)))
-
-(use-package org-download
-  :after org
-  :defer nil
-  :custom
-  (org-download-method 'directory)
-  (org-download-image-dir "~/journal/_resources")
-  (org-download-heading-lvl 0)
-  (org-download-timestamp "org_%Y%m%d-%H%M%S_")
-  (org-image-actual-width 900)
-  (org-download-screenshot-method "xclip -selection clipboard -t image/png -o > '%s'")
-  :bind
-  ("C-M-y" . org-download-screenshot)
-  :config
-  (require 'org-download))
-(setq org-image-actual-width nil)
-
 (defun efs/lsp-mode-setup ()
   (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
   (lsp-headerline-breadcrumb-mode))
 
-(use-package dashboard
-  :ensure t
-  :config
-  :init
-  (dashboard-setup-startup-hook)
-  (progn
-    (setq dashboard-items '((recents  . 5)
-                            (projects . 5)
-                            (agenda . 5)
-                            )) ; Add the custom item
-    ;;(setq dashboard-center-content t)
-    (setq dashboard-set-footer nil)
-    (setq dashboard-init-info "")
-    (setq dashboard-set-file-icons t)
-    (setq dashboard-banner-logo-title "thlurte")
-    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
-)
 
 (defun efs/exwm-update-class ()
   (exwm-workspace-rename-buffer exwm-class-name))
@@ -660,3 +714,25 @@
                     (number-sequence 0 9))))
 
   (exwm-enable))
+
+(use-package dashboard
+  :ensure t
+  :config
+  (dashboard-setup-startup-hook)
+  (setq dashboard-projects-switch-function 'counsel-projectile-switch-project-by-name)
+  (setq  initial-buffer-choice       (lambda () (get-buffer "*dashboard*")))
+  :init
+  (progn
+    (setq dashboard-items '((recents  . 5)
+                            (projects . 5)
+                            (agenda . 5)
+                            )) ; Add the custom item
+    (setq dashboard-center-content t)
+    (setq dashboard-set-footer nil)
+    (setq dashboard-init-info "")
+    (setq dashboard-set-file-icons t)
+    (setq dashboard-banner-logo-title "thlurte")
+    (setq dashboard-startup-banner "~/lab/.emacs/pi.txt"))
+    (add-hook 'after-init-hook 'dashboard-refresh-buffer))
+
+(dashboard-refresh-buffer)
